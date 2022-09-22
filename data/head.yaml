@@ -1,0 +1,9 @@
+path: ../datasets/head517  # dataset root dir
+train: images/train  # train images (relative to 'path')
+val: images/val  # val images (relative to 'path')
+
+#test:  # test images (optional)
+
+# Classes
+nc: 1  # number of classes
+names: ['person']  # class names
