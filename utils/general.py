@@ -57,6 +57,38 @@ os.environ['NUMEXPR_MAX_THREADS'] = str(NUM_THREADS)  # NumExpr max threads
 os.environ['OMP_NUM_THREADS'] = '1' if platform.system() == 'darwin' else str(NUM_THREADS)  # OpenMP (PyTorch and SciPy)
 
 
+
+
+# add other codes here.
+from utils.metrics import bbox_iou
+
+def NMS(boxes, scores, iou_thres, class_nms='CIoU'):
+    # class_nms=class_nms
+    GIoU=CIoU=DIoU=EIoU=SIoU=False
+    if class_nms == 'CIoU':
+        CIoU=True
+    elif class_nms == 'DIoU':
+        DIoU=True
+    elif class_nms == 'GIoU':
+        GIoU=True
+    elif class_nms == 'EIoU':
+        EIoU=True
+    else :
+        SIoU=True
+    B = torch.argsort(scores, dim=-1, descending=True)
+    keep = []
+    while B.numel() > 0:
+        index = B[0]
+        keep.append(index)
+        if B.numel() == 1: break
+        iou = bbox_iou(boxes[index, :], boxes[B[1:], :], GIoU=GIoU, DIoU=DIoU, CIoU=CIoU, EIoU=EIoU, SIoU=SIoU)
+        inds = torch.nonzero(iou <= iou_thres).reshape(-1)
+        B = B[inds + 1]
+    return torch.tensor(keep)
+
+
+
+####
 def is_ascii(s=''):
     # Is string composed of all ASCII (no UTF) characters? (note str().isascii() introduced in python 3.7)
     s = str(s)  # convert list, tuple, None, etc. to str
@@ -890,7 +922,11 @@ def non_max_suppression(
         # Batched NMS
         c = x[:, 5:6] * (0 if agnostic else max_wh)  # classes
         boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
-        i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
+
+        # change here to enable XiOU
+        # i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
+        i = NMS(boxes, scores, iou_thres, class_nms='GIoU') # NMS
+
         if i.shape[0] > max_det:  # limit detections
             i = i[:max_det]
         if merge and (1 < n < 3E3):  # Merge NMS (boxes merged using weighted mean)
