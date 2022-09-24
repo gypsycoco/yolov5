@@ -81,7 +81,7 @@ def NMS(boxes, scores, iou_thres, class_nms='CIoU'):
         index = B[0]
         keep.append(index)
         if B.numel() == 1: break
-        iou = bbox_iou(boxes[index, :], boxes[B[1:], :], GIoU=GIoU, DIoU=DIoU, CIoU=CIoU, EIoU=EIoU, SIoU=SIoU)
+        iou = bbox_iou(boxes[index, :], boxes[B[1:], :], GIoU=GIoU, DIoU=DIoU, CIoU=CIoU)
         inds = torch.nonzero(iou <= iou_thres).reshape(-1)
         B = B[inds + 1]
     return torch.tensor(keep)
